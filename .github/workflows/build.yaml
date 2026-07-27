@@ -71,45 +71,43 @@ jobs:
       # 7. 配置（贴近您本地构建，仅添加交叉构建必须的选项）
       - name: Configure GCC
         run: |
-          cd $HOME/project/gcc-build2
-          echo "GCC_NO_EXECUTABLES=1" >> $GITHUB_ENV
-          echo "ac_cv_prog_cc_cross=yes" >> $GITHUB_ENV
-          echo "ac_cv_prog_cxx_cross=yes" >> $GITHUB_ENV
-          echo "ac_cv_func_mmap_fixed_mapped=yes" >> $GITHUB_ENV
-          echo "ac_cv_func_mmap_dev_zero=yes" >> $GITHUB_ENV
-          echo "ac_cv_func_mmap_anon=yes" >> $GITHUB_ENV
+          cd ~/project/gcc-build2 && rm -rf * &&
           $GCC_SRC/configure \
-                --build=x86_64-pc-linux-gnu \
-                --host=aarch64-linux-android \
-                --target=aarch64-linux-android \
-                --prefix=/opt/gcc-4.9 \
-                --enable-languages=c,c++ \
-                --disable-bootstrap \
-                --disable-multilib \
-                --disable-libsanitizer \
-                --disable-libvtv \
-                --disable-libcilkrts \
-                --disable-libquadmath \
-                --disable-libssp \
-                --disable-libitm \
-                --disable-libgomp \
-                --disable-shared \
-                --disable-nls \
-                --with-sysroot=$SYSROOT \
-                --with-gmp=$DEP_ROOT \
-                --with-mpfr=$DEP_ROOT \
-                --with-mpc=$DEP_ROOT \
-                --with-ld=$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/$LD \
-                --with-ar=$AR \
-                --with-ranlib=$RANLIB \
-                --with-nm=$NM \
-                CC_FOR_BUILD=gcc \
-                CXX_FOR_BUILD=g++ \
-                CC="aarch64-linux-android-gcc" \
-                CXX="aarch64-linux-android-g++" \
-                CFLAGS="-O2 -pipe" \
-                CXXFLAGS="-O2 -pipe" \
-                LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"
+              --build=x86_64-pc-linux-gnu \
+              --host=aarch64-linux-android \
+              --target=aarch64-linux-android \
+              --prefix=/opt/gcc-4.9 \
+              --enable-languages=c,c++ \
+              --disable-bootstrap \
+              --disable-multilib \
+              --disable-libsanitizer \
+              --disable-libvtv \
+              --disable-libcilkrts \
+              --disable-libquadmath \
+              --disable-libssp \
+              --disable-libitm \
+              --disable-libatomic \
+              --disable-libgomp \
+              --disable-libffi \
+              --disable-plugin \
+              --disable-nls \
+              --disable-shared \
+              --enable-static \
+              --with-sysroot=$SYSROOT \
+              --with-gmp=$DEP_ROOT \
+              --with-mpfr=$DEP_ROOT \
+              --with-mpc=$DEP_ROOT \
+              --with-ld=$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/$LD \
+              --with-ar=$AR \
+              --with-ranlib=$RANLIB \
+              --with-nm=$NM \
+              CC_FOR_BUILD=gcc \
+              CXX_FOR_BUILD=g++ \
+              CC="aarch64-linux-android-gcc" \
+              CXX="aarch64-linux-android-g++" \
+              CFLAGS="-O2 -pipe" \
+              CXXFLAGS="-O2 -pipe" \
+              LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"
 
       # 8. 构建（使用所有核心）
       - name: Build GCC

@@ -83,12 +83,6 @@ jobs:
               --disable-libsanitizer \
               --disable-libvtv \
               --disable-libcilkrts \
-              --disable-libquadmath \
-              --disable-libssp \
-              --disable-libitm \
-              --disable-libgomp \
-              --disable-shared \
-              --disable-nls \
               --with-sysroot=$SYSROOT \
               --with-gmp=$DEP_ROOT \
               --with-mpfr=$DEP_ROOT \
@@ -103,7 +97,7 @@ jobs:
               CXX="$CXX" \
               CFLAGS="-O2 -pipe" \
               CXXFLAGS="-O2 -pipe" \
-              LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"
+              LDFLAGS="-L$DEP_ROOT/lib"
 
       # 8. 构建（使用所有核心）
       - name: Build GCC
@@ -112,7 +106,7 @@ jobs:
           make -j$(nproc) \                                                                     
           CC_FOR_BUILD=gcc \
           CXX_FOR_BUILD=g++ \
-          LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a -Wl,-rpath-link=$SYSROOT/usr/lib -static-libgcc -Wl,--whole-archive -lgnustl_static -Wl,--no-whole-archive -lsupc++"
+          LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a  -static-libgcc -Wl,--whole-archive -lgnustl_static -Wl,--no-whole-archive -lsupc++"
 
       # 9. 打包构建目录
       - name: Package

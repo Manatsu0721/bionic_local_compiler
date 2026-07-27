@@ -36,7 +36,9 @@ jobs:
           mkdir -p $HOME/project/gcc-build2
           # 如果您将源码放在仓库中，可以复制；否则可以从外部下载
           git clone --depth=1 https://github.com/Manatsu0721/bionic_local_compiler.git
-          tar -xzvf bionic_local_compiler/gcc-4.9-src.tar.gz -C $HOME/project/gcc-4.9-src
+          wget -O $HOME/project/gcc-4.9-src.tar.gz \
+            https://github.com/Manatsu0721/bionic_local_compiler/releases/download/src/gcc-4.9-src.tar.gz
+          tar -xzvf $HOME/project/gcc-4.9-src.tar.gz -C $HOME/project/gcc-4.9-src
           # 这里假设您已将源码放在仓库根目录的 gcc-4.9-src/ 中
           # cp -r gcc-4.9-src $HOME/project/
           mv bionic_local_compiler/deps $HOME/project/deps

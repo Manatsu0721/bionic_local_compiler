@@ -57,16 +57,21 @@ jobs:
       # 6. 设置其他环境变量（与您本地构建一致）
       - name: Set env vars
         run: |
+          echo "NDK=$HOME/android-ndk-r15c" >> $GITHUB_ENV
+          echo "SYSROOT=$NDK/platforms/android-24/arch-arm64" >> $GITHUB_ENV
+          echo "DEP_ROOT=$HOME/project/deps" >> $GITHUB_ENV
+          echo "GCC_SRC=$HOME/project/gcc-4.9-src" >> $GITHUB_ENV
+          echo "BUILD_DIR=$HOME/project/gcc-build2" >> $GITHUB_ENV
+          echo "PATH=~/project/gcc-wrappers:$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
+          echo "CC=aarch64-linux-android-gcc" >> $GITHUB_ENV
+          echo "CXX=aarch64-linux-android-g++" >> $GITHUB_ENV
           echo "AR=aarch64-linux-android-ar" >> $GITHUB_ENV
           echo "RANLIB=aarch64-linux-android-ranlib" >> $GITHUB_ENV
           echo "NM=aarch64-linux-android-nm" >> $GITHUB_ENV
           echo "LD=aarch64-linux-android-ld.gold" >> $GITHUB_ENV
-          echo "BUILD_DIR=$HOME/project/gcc-build2" >> $GITHUB_ENV
-          echo "CC=aarch64-linux-android-gcc" >> $GITHUB_ENV
-          echo "CXX=aarch64-linux-android-g++" >> $GITHUB_ENV
           echo "CPPFLAGS=-I$DEP_ROOT/include" >> $GITHUB_ENV
-          echo "LIBS=-lmpc -lmpfr -lgmp" >> $GITHUB_ENV
           echo "LDFLAGS=-L$DEP_ROOT/lib" >> $GITHUB_ENV
+          echo "LIBS=-lmpc -lmpfr -lgmp" >> $GITHUB_ENV
 
       - name: Set more environment variables
         run: |
@@ -90,6 +95,7 @@ jobs:
             --target=aarch64-linux-android \
             --prefix=/opt/gcc-4.9 \
             --enable-languages=c,c++ \
+            \
             --disable-bootstrap \
             --disable-multilib \
             --disable-libsanitizer \
@@ -98,34 +104,34 @@ jobs:
             --disable-libquadmath \
             --disable-libssp \
             --disable-libitm \
-            --disable-libatomic \
             --disable-libgomp \
-            --disable-libffi \
-            --disable-nls \
             --disable-shared \
-            --enable-static \
-            --with-sysroot=$SYSROOT \
-            --with-gmp=$DEP_ROOT \
-            --with-mpfr=$DEP_ROOT \
-            --with-mpc=$DEP_ROOT \
-            --with-ld=$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/$LD \
-            --with-ar=$AR \
-            --with-ranlib=$RANLIB \
-            --with-nm=$NM \
+            --disable-nls \
+            \
+            --with-sysroot="$SYSROOT" \
+            --with-gmp="$DEP_ROOT" \
+            --with-mpfr="$DEP_ROOT" \
+            --with-mpc="$DEP_ROOT" \
+            --with-ld="$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/$LD" \
+            --with-ar="$AR" \
+            --with-ranlib="$RANLIB" \
+            --with-nm="$NM" \
+            \
             CC_FOR_BUILD=gcc \
             CXX_FOR_BUILD=g++ \
-            CC="aarch64-linux-android-gcc" \
-            CXX="aarch64-linux-android-g++" \
+            CC="aarch64-linux-android-gcc --sysroot=$SYSROOT" \
+            CXX="aarch64-linux-android-g++ --sysroot=$SYSROOT" \
             CFLAGS="-O2 -pipe" \
             CXXFLAGS="-O2 -pipe" \
             LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"
+
 
       # 8. 构建（使用所有核心）
       - name: Build GCC
         run: |
           cd $HOME/project/gcc-build2
-          make -j$(nproc) \
-          LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a  -static-libgcc -Wl,--whole-archive -lgnustl_static -lsupc++"
+          make -j$(nproc)
+          # LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a  -static-libgcc -Wl,--whole-archive -lgnustl_static -lsupc++"
 
       # 9. 打包构建目录
       - name: Package

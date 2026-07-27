@@ -45,7 +45,7 @@ jobs:
           echo "DEP_ROOT=$HOME/project/deps" >> $GITHUB_ENV
           echo "GCC_SRC=$HOME/project/gcc-4.9-src" >> $GITHUB_ENV
           # 替换文件与打补丁
-          patch -f $HOME/project/gcc-4.9-src/libatomic/configure < bionic_local_compiler/patch/gcc-4.9-canadian-cross-link-fix.patch
+          cp -r bionic_local_compiler/gcc-4.9-patched/. $HOME/project/gcc-4.9-src/
 
       # 5. 创建 wrapper 脚本（解决 --sysroot 硬编码）
       - name: Create wrapper scripts

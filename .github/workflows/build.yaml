@@ -133,7 +133,7 @@ jobs:
       - name: Show config.log on failure
         if: failure()
         run: |
-          echo "=== Config.log error messages ==="
-          grep -E "(error|cannot|undefined|missing)" $HOME/project/gcc-build2/config.log | head -50
-          echo "=== Last 50 lines of config.log ==="
-          tail -50 $HOME/project/gcc-build2/config.log
+          # echo "=== Config.log error messages ==="
+          # grep -E "(error|cannot|undefined|missing)" $HOME/project/gcc-build2/config.log | head -50
+          # echo "=== Last 50 lines of config.log ==="
+          cat $HOME/project/gcc-build2/config.log

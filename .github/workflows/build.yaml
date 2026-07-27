@@ -1,0 +1,129 @@
+name: Build Android GCC (cross)
+
+on:
+  workflow_dispatch:  # 手动触发，您也可以添加 push 等
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 检出版本库（用于存放源码和后续打包）
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 安装系统依赖（包括 libmpc-dev 等）
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential flex bison texinfo gawk \
+             libncurses5-dev libgmp-dev libmpfr-dev libmpc-dev
+
+      # 3. 下载 Android NDK r15c
+      - name: Download NDK
+        run: |
+          wget -q https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
+          unzip -q android-ndk-r15c-linux-x86_64.zip
+          echo "NDK=$HOME/android-ndk-r15c" >> $GITHUB_ENV
+          echo "SYSROOT=$HOME/android-ndk-r15c/platforms/android-24/arch-arm64" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-ndk-r15c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
+
+
+      # 4. 克隆仓库，准备 GCC 源码
+      - name: Clone files - Prepare GCC source
+        run: |
+          mkdir -p $HOME/project
+          mkdir -p $HOME/project/gcc-4.9-src
+          mkdir -p $HOME/project/gcc-build2
+          # 如果您将源码放在仓库中，可以复制；否则可以从外部下载
+          git clone --depth=1 https://github.com/Manatsu0721/bionic_local_compiler.git
+          tar -xzvf bionic_local_compiler/gcc-4.9-src.tar.gz -C $HOME/project/gcc-4.9-src
+          # 这里假设您已将源码放在仓库根目录的 gcc-4.9-src/ 中
+          # cp -r gcc-4.9-src $HOME/project/
+          mv bionic_local_compiler/deps $HOME/project/deps
+          echo "DEP_ROOT=$HOME/project/deps" >> $GITHUB_ENV
+          echo "GCC_SRC=$HOME/project/gcc-4.9-src" >> $GITHUB_ENV
+          # 替换文件与打补丁
+          patch -f $HOME/project/gcc-4.9-src/libatomic/configure < bionic_local_compiler/patch/gcc-4.9-canadian-cross-link-fix.patch
+
+      # 5. 创建 wrapper 脚本（解决 --sysroot 硬编码）
+      - name: Create wrapper scripts
+        run: |
+          mv bionic_local_compiler/gcc-wrappers $HOME/project/gcc-wrappers
+          chmod +x $HOME/project/gcc-wrappers/aarch64-linux-android-*
+          echo "PATH=$HOME/project/gcc-wrappers:$PATH" >> $GITHUB_ENV
+
+      # 6. 设置其他环境变量（与您本地构建一致）
+      - name: Set env vars
+        run: |
+          echo "AR=aarch64-linux-android-ar" >> $GITHUB_ENV
+          echo "RANLIB=aarch64-linux-android-ranlib" >> $GITHUB_ENV
+          echo "NM=aarch64-linux-android-nm" >> $GITHUB_ENV
+          echo "LD=aarch64-linux-android-ld.gold" >> $GITHUB_ENV
+          echo "BUILD_DIR=$HOME/project/gcc-build2" >> $GITHUB_ENV
+          echo "CC=aarch64-linux-android-gcc" >> $GITHUB_ENV
+          echo "CXX=aarch64-linux-android-g++" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$DEP_ROOT/include" >> $GITHUB_ENV
+          echo "LIBS=-lmpc -lmpfr -lgmp" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$DEP_ROOT/lib" >> $GITHUB_ENV
+
+      # 7. 配置（贴近您本地构建，仅添加交叉构建必须的选项）
+      - name: Configure GCC
+        run: |
+          cd $HOME/project/gcc-build2
+          $GCC_SRC/configure \
+                --build=x86_64-pc-linux-gnu \
+                --host=aarch64-linux-android \
+                --target=aarch64-linux-android \
+                --prefix=/opt/gcc-4.9 \
+                --enable-languages=c,c++ \
+                --disable-bootstrap \
+                --disable-multilib \
+                --disable-libsanitizer \
+                --disable-libvtv \
+                --disable-libcilkrts \
+                --disable-libquadmath \
+                --disable-libssp \
+                --disable-libitm \
+                --disable-libgomp \
+                --disable-shared \
+                --disable-nls \
+                --with-sysroot=$SYSROOT \
+                --with-gmp=$DEP_ROOT \
+                --with-mpfr=$DEP_ROOT \
+                --with-mpc=$DEP_ROOT \
+                --with-ld=$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/$LD \
+                --with-ar=$AR \
+                --with-ranlib=$RANLIB \
+                --with-nm=$NM \
+                CC_FOR_BUILD=gcc \
+                CXX_FOR_BUILD=g++ \
+                CC="aarch64-linux-android-gcc" \
+                CXX="aarch64-linux-android-g++" \
+                CFLAGS="-O2 -pipe" \
+                CXXFLAGS="-O2 -pipe" \
+                LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"
+
+      # 8. 构建（使用所有核心）
+      - name: Build GCC
+        run: |
+          cd $HOME/project/gcc-build2
+          make -j$(nproc) LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a -Wl,-rpath-link=$SYSROOT/usr/lib -static-libgcc -Wl,--whole-archive -lgnustl_static -Wl,--no-whole-archive -lsupc++"
+
+      # 9. 打包构建目录
+      - name: Package
+        if: success()
+        run: |
+          cd $HOME/project
+          tar -czf gcc-build2.tar.gz gcc-build2
+
+      # 10. 上传到 Release
+      - name: Upload to Release
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          files: $HOME/project/gcc-build2.tar.gz
+          tag_name: build-${{ github.run_number }}
+          name: "GCC 4.9 for Android (Build ${{ github.run_number }})"
+          body: "Cross-built GCC 4.9 targeting aarch64-linux-android, using NDK r15c sysroot."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

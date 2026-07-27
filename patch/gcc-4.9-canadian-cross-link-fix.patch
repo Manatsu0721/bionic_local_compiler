@@ -1,0 +1,76 @@
+Fix target library configure for Canadian cross builds.
+
+When --build != --host (Canadian cross), autoconf's AC_PROG_CC
+unconditionally tries to link a test program to determine EXEEXT.
+If the cross-compiler requires special flags (like --sysroot for
+NDK's GCC) to find CRT files, this link test fails even though
+the compiler is perfectly functional, causing configure to abort
+with "C compiler cannot create executables".
+
+Fix: When the link test fails and cross_compiling is already set
+to 'yes' (because $build != $host), skip the error and continue
+instead of aborting. The compiler can still compile .o files,
+which is all we need for target library builds.
+
+--- a/libatomic/configure
++++ b/libatomic/configure
+@@ -3627,10 +3627,15 @@ else
+   ac_file=''
+ fi
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_file" >&5
+ $as_echo "$ac_file" >&6; }
+ if test -z "$ac_file"; then :
++  if test "$cross_compiling" = yes; then
++    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cross compiler cannot link executables (expected for Canadian cross)" >&5
++$as_echo "$as_me: WARNING: cross compiler cannot link executables (expected for Canadian cross)" >&2; }
++    ac_cv_exeext=
++  else
+   $as_echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5
+ 
+ { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+ $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+@@ -3638,9 +3643,11 @@ $as_echo_n "checking whether the C compiler works... " >&6; }
++  fi
+ fi
+ 
++if test -n "$ac_file"; then
+ # Check that the compiler produces executables we can run.  If not, either
+ # the compiler is broken, or we cross compile.
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler works" >&5
+ $as_echo_n "checking whether the C compiler works... " >&6; }
+@@ -3668,6 +3675,7 @@ if test "$cross_compiling" != yes; then
+   else
+     if test "$cross_compiling" = maybe; then
+ 	cross_compiling=yes
+     else
+ 	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+@@ -3670,6 +3678,7 @@ esac
+ rm -f a.out a.out.dSYM a.exe conftest$ac_cv_exeext b.out
+ ac_clean_files=$ac_clean_files_save
+ fi
++fi
+ 
+ # Check that the compiler produces executables we can run.  If not, either
+ # the compiler is broken, or we cross compile.
+--- a/libstdc++-v3/configure
++++ b/libstdc++-v3/configure
+@@ -3627,10 +3627,15 @@ else
+   ac_file=''
+ fi
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_file" >&5
+ $as_echo "$ac_file" >&6; }
+ if test -z "$ac_file"; then :
++  if test "$cross_compiling" = yes; then
++    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cross compiler cannot link executables (expected for Canadian cross)" >&5
++$as_echo "$as_me: WARNING: cross compiler cannot link executables (expected for Canadian cross)" >&2; }
++    ac_cv_exeext=
++  else
+   $as_echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5
+ 
+ { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+@@ -3647,6 +3652,7 @@ $as_echo_n "checking whether the C compiler works... " >&6; }
++  fi
+ fi
+...

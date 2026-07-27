@@ -72,6 +72,12 @@ jobs:
       - name: Configure GCC
         run: |
           cd $HOME/project/gcc-build2
+          echo "GCC_NO_EXECUTABLES=1" >> $GITHUB_ENV
+          echo "ac_cv_prog_cc_cross=yes" >> $GITHUB_ENV
+          echo "ac_cv_prog_cxx_cross=yes" >> $GITHUB_ENV
+          echo "ac_cv_func_mmap_fixed_mapped=yes" >> $GITHUB_ENV
+          echo "ac_cv_func_mmap_dev_zero=yes" >> $GITHUB_ENV
+          echo "ac_cv_func_mmap_anon=yes" >> $GITHUB_ENV
           $GCC_SRC/configure \
                 --build=x86_64-pc-linux-gnu \
                 --host=aarch64-linux-android \

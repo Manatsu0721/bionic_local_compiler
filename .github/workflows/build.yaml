@@ -87,8 +87,7 @@ jobs:
           # rm -rf $GCC_SRC/lto-plugin $GCC_SRC/function_reordering_plugin $GCC_SRC/intl
 
       - name: Configure
-        run: |
-          run bionic_local_compiler/run.sh
+        run: bionic_local_compiler/run.sh
 
 
       # 8. 构建（使用所有核心）

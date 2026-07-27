@@ -104,8 +104,8 @@ jobs:
               --with-nm=$NM \
               CC_FOR_BUILD=gcc \
               CXX_FOR_BUILD=g++ \
-              CC="aarch64-linux-android-gcc" \
-              CXX="aarch64-linux-android-g++" \
+              CC="$CC" \
+              CXX="$CXX" \
               CFLAGS="-O2 -pipe" \
               CXXFLAGS="-O2 -pipe" \
               LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"
@@ -114,8 +114,8 @@ jobs:
       - name: Build GCC
         run: |
           cd $HOME/project/gcc-build2
-          make -j$(nproc)
-          # LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a  -static-libgcc -Wl,--whole-archive -lgnustl_static -Wl,--no-whole-archive -lsupc++"
+          make -j$(nproc) \
+          LDFLAGS="-L$DEP_ROOT/lib -L$NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a  -static-libgcc -Wl,--whole-archive -lgnustl_static -lsupc++"
 
       # 9. 打包构建目录
       - name: Package

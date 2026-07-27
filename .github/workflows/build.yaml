@@ -129,3 +129,11 @@ jobs:
           body: "Cross-built GCC 4.9 targeting aarch64-linux-android, using NDK r15c sysroot."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Show config.log on failure
+        if: failure()
+        run: |
+          echo "=== Config.log error messages ==="
+          grep -E "(error|cannot|undefined|missing)" $HOME/project/gcc-build2/config.log | head -50
+          echo "=== Last 50 lines of config.log ==="
+          tail -50 $HOME/project/gcc-build2/config.log

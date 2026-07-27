@@ -99,8 +99,8 @@ jobs:
                 --with-nm=$NM \
                 CC_FOR_BUILD=gcc \
                 CXX_FOR_BUILD=g++ \
-                CC="aarch64-linux-android-gcc" \
-                CXX="aarch64-linux-android-g++" \
+                CC="aarch64-linux-android-gcc --sysroot=$SYSROOT" \
+                CXX="aarch64-linux-android-g++ --sysroot=$SYSROOT" \
                 CFLAGS="-O2 -pipe" \
                 CXXFLAGS="-O2 -pipe" \
                 LDFLAGS="-L$DEP_ROOT/lib -Wl,-rpath-link=$SYSROOT/usr/lib"

@@ -48,6 +48,7 @@ jobs:
           echo "GCC_SRC=$HOME/project/gcc-4.9-src" >> $GITHUB_ENV
           # 替换文件与打补丁
           cp -r bionic_local_compiler/gcc-4.9-patched/. $HOME/project/gcc-4.9-src/
+          rm -f $DEP_ROOT/lib/*.la
 
       # 5. 创建 wrapper 脚本（解决 --sysroot 硬编码）
       - name: Create wrapper scripts

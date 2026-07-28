@@ -43,7 +43,8 @@ $GCC_SRC/configure \
     ac_cv_func_shl_load=no \
     gcc_no_link=no
 
-make -j$(nproc)  CFLAGS="-O2 -pipe -Wno-reserved-user-defined-literal -fbracket-depth=512 -std=gnu11" \
-     CXXFLAGS="-O2 -pipe -Wno-reserved-user-defined-literal -fbracket-depth=512 -std=gnu++14" \
+make -j$(nproc)  CFLAGS="-O2 -pipe  -std=gnu11" \
+     CXXFLAGS="-O2 -pipe  -std=gnu++11" \
      GCC_FOR_TARGET=gcc \
      all-gcc
+# 如果使用新版本clang构建该GCC，请在CFLAGS CXXFLAGS都加入: -fbracket-depth=512 -Wno-reserved-user-defined-literal

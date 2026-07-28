@@ -40,8 +40,7 @@ $GCC_SRC/configure \
     ac_cv_objext='o' \
     lt_cv_dlopen=no \
     ac_cv_func_dlopen=no \
-    ac_cv_func_shl_load=no \
-    gcc_no_link=no
+    ac_cv_func_shl_load=no
 
 make -j$(nproc)  CFLAGS="-O2 -pipe  -std=gnu11" \
      CXXFLAGS="-O2 -pipe  -std=gnu++11" \

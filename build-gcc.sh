@@ -20,6 +20,8 @@ $GCC_SRC/configure \
     --disable-shared \
     --disable-nls \
     --with-sysroot=$SYSROOT \
+    --with-build-sysroot=$SYSROOT \
+    --with-linker-hash-style=gnu \
     --with-gmp=$DEP_ROOT \
     --with-mpfr=$DEP_ROOT \
     --with-mpc=$DEP_ROOT \

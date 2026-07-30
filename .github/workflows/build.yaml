@@ -1,4 +1,4 @@
-name: Build Android GCC (cross)
+name: Build Android Clang (cross)
 
 on:
   workflow_dispatch:  # 手动触发，您也可以添加 push 等
@@ -11,119 +11,86 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 安装系统依赖（包括 libmpc-dev 等）
+      # 2. 安装系统依赖（包括 libmpc-dev 等），使用旧版本cmake
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential flex bison texinfo gawk
+          sudo apt install -y build-essential flex bison texinfo gawk cmake ninja clang  # 日后如果action系统版本更新，请设法降级cmake。
           sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
           sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
 
-      # 3. 下载 Android NDK r15c
+      # 3. 下载 Android NDK r27d
       - name: Download NDK
         run: |
-          wget -q https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
-          unzip -q android-ndk-r15c-linux-x86_64.zip -d $HOME/
-          echo "NDK=$HOME/android-ndk-r15c" >> $GITHUB_ENV
+          wget -q https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
+          unzip -q android-ndk-r27d-linux.zip -d $HOME/
+          echo "NDK=$HOME/android-ndk-r27d" >> $GITHUB_ENV
 
 
-      # 4. 克隆仓库，准备 GCC 源码
-      - name: Clone files - Prepare GCC source
+      # 4. 克隆仓库，准备源码
+      - name: Clone files - Prepare Clang source
         run: |
           mkdir -p $HOME/project
-          mkdir -p $HOME/project/gcc-4.9-src
-          mkdir -p $HOME/project/gcc-build2
-          mkdir -p $HOME/project/deps-src
-          mkdir -p $HOME/project/deps
-          # Download GCC Source
+          mkdir -p $HOME/project/llvm-build
+          # Download Source
+          cd $HOME/project
+          git clone https://android.googlesource.com/toolchain/clang
+          cd clang 
+          git checkout 745b335211bb9eadfa6aa6301f84715cee4b37c5
+          cd ..
+          git clone https://android.googlesource.com/toolchain/llvm
+          cd llvm
+          git checkout 60cf23e54e46c807513f7a36d0a7b777920b5881
+          cd ..
+          git clone https://android.googlesource.com/toolchain/lld
+          cd lld
+          git checkout 35c021c49f44cd4e06875c4b1398a2b3464132bb
+          cd ..
           git clone --depth=1 https://github.com/Manatsu0721/bionic_local_compiler.git
-          wget -q -O $HOME/project/gcc-4.9-src.tar.gz \
-            https://github.com/Manatsu0721/bionic_local_compiler/releases/download/src/gcc-4.9-src.tar.gz
-          tar -xzvf $HOME/project/gcc-4.9-src.tar.gz -C $HOME/project/gcc-4.9-src 2>&1 >/dev/null
-          wget -q -O $HOME/project/gmp-6.2.1.tar.xz \
-            https://github.com/Manatsu0721/bionic_local_compiler/releases/download/src/gmp-6.2.1.tar.xz
-          tar -xf $HOME/project/gmp-6.2.1.tar.xz -C $HOME/project/deps-src 2>&1 >/dev/null
-          wget -q -O $HOME/project/mpfr-4.2.1.tar.xz \
-            https://github.com/Manatsu0721/bionic_local_compiler/releases/download/src/mpfr-4.2.1.tar.xz
-          tar -xf $HOME/project/mpfr-4.2.1.tar.xz -C $HOME/project/deps-src 2>&1 >/dev/null
-          wget -q -O $HOME/project/mpc-1.3.0.tar.gz \
-            https://github.com/Manatsu0721/bionic_local_compiler/releases/download/src/mpc-1.3.0.tar.gz
-          tar -xf $HOME/project/mpc-1.3.0.tar.gz -C $HOME/project/deps-src 2>&1 >/dev/null
-          # 替换文件与打补丁
-          cp -r bionic_local_compiler/gcc-4.9-patched/. $HOME/project/gcc-4.9-src/
-          cp -r bionic_local_compiler/deps-patched/. $HOME/project/deps-src
 
-      # 5. 配置 wrapper 脚本（解决 --sysroot 硬编码）
-      - name: Create wrapper scripts
-        run: |
-          mv bionic_local_compiler/gcc-wrappers $HOME/project/gcc-wrappers
-          chmod +x $HOME/project/gcc-wrappers/aarch64-linux-android-*
-          chmod +x bionic_local_compiler/*.sh
-
-
-      # 6. 设置其他环境变量（与您本地构建一致）
+      # 5. 设置其他环境变量
       - name: Set env vars
         run: |
-          # $NDK移到前面步骤，否则在这里展开不了。
-          echo "SYSROOT=$NDK/platforms/android-24/arch-arm64" >> $GITHUB_ENV
-          echo "DEP_ROOT=$HOME/project/deps" >> $GITHUB_ENV
-          echo "GCC_SRC=$HOME/project/gcc-4.9-src" >> $GITHUB_ENV
-          echo "BUILD_DIR=$HOME/project/gcc-build2" >> $GITHUB_ENV
-          echo "PATH=$HOME/project/gcc-wrappers:$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
+          # 注：$NDK移到前面步骤，否则在这里展开不了。
+          echo "SYSROOT=$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot" >> $GITHUB_ENV
+          echo "PATH=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" >> $GITHUB_ENV
           echo "TARGET=aarch64-linux-android" >> $GITHUB_ENV
-          echo "CC=aarch64-linux-android-gcc" >> $GITHUB_ENV
-          echo "CXX=aarch64-linux-android-g++" >> $GITHUB_ENV
-          echo "AR=aarch64-linux-android-ar" >> $GITHUB_ENV
-          echo "RANLIB=aarch64-linux-android-ranlib" >> $GITHUB_ENV
-          echo "NM=aarch64-linux-android-nm" >> $GITHUB_ENV
-          echo "LD=aarch64-linux-android-ld.gold" >> $GITHUB_ENV
+          echo "CC=aarch64-linux-android24-clang" >> $GITHUB_ENV
+          echo "CXX=aarch64-linux-android24-clang++" >> $GITHUB_ENV
+          echo "AR=llvm-ar" >> $GITHUB_ENV
+          echo "RANLIB=llvm-ranlib" >> $GITHUB_ENV
+          echo "NM=llvm-nm" >> $GITHUB_ENV
+          echo "STRIP=llvm-strip" >> $GITHUB_ENV
+          echo "OBJCOPY=llvm-objcopy" >> $GITHUB_ENV
+          echo "LD=ld.lld" >> $GITHUB_ENV
 
 
-      - name: Build GMP/MPFR/MPC
-        run: bionic_local_compiler/build-deps.sh
 
-      - name: Set GCC Build env vars
-        run: |
-          # 下列环境变量不能在编译 GMP/MPFR/MPC 之前，否则可能会冲突。
-          echo "CPPFLAGS=-I$DEP_ROOT/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L$DEP_ROOT/lib" >> $GITHUB_ENV
-          echo "LIBS=-lmpc -lmpfr -lgmp" >> $GITHUB_ENV
-          echo "GCC_NO_EXECUTABLES=1" >> $GITHUB_ENV
-          echo "ac_cv_prog_cc_cross=yes" >> $GITHUB_ENV
-          echo "ac_cv_prog_cxx_cross=yes" >> $GITHUB_ENV
-          echo "ac_cv_func_mmap_fixed_mapped=yes" >> $GITHUB_ENV
-          echo "ac_cv_func_mmap_dev_zero=yes" >> $GITHUB_ENV
-          echo "ac_cv_func_mmap_anon=yes" >> $GITHUB_ENV
-
-
-      - name: Build GCC
-        run: bionic_local_compiler/build-gcc.sh
+      - name: Build Clang
+        run: $HOME/project/bionic_local_compiler/build-clang.sh
 
 
       # 9. 打包构建目录
       - name: Package
         if: success()
         run: |
-          cd $HOME/project
-          tar -czf gcc-build2.tar.gz gcc-build2
+          cd $HOME/project/llvm-build
+          tar -czf ../build-install.tar.gz install
 
       # 10. 上传到 Release
       - name: Upload to Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          files: $HOME/project/gcc-build2.tar.gz
+          files: $HOME/project/build-install.tar.gz
           tag_name: build-${{ github.run_number }}
-          name: "GCC 4.9 for Android (Build ${{ github.run_number }})"
-          body: "Cross-built GCC 4.9 targeting aarch64-linux-android, using NDK r15c sysroot."
+          name: "Clang 9.0.3 for Android (Build ${{ github.run_number }})"
+          body: "Cross-built Clang 9.0.3 targeting aarch64-linux-android, using NDK r27d."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Show config.log on failure
         if: failure()
         run: |
-          # echo "=== Config.log error messages ==="
-          # grep -E "(error|cannot|undefined|missing)" $HOME/project/gcc-build2/config.log | head -50
-          # echo "=== Last 50 lines of config.log ==="
-          cat $HOME/project/gcc-build2/config.log
-          cat $HOME/project/deps-src/*/config.log
+          # 暂时没想到能写什么。
+          sleep 0.1

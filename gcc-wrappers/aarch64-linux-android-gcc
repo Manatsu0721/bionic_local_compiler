@@ -1,4 +1,0 @@
-#!/bin/bash
-exec $HOME/android-ndk-r15c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-gcc \
-    --sysroot=$HOME/android-ndk-r15c/platforms/android-24/arch-arm64 \
-    "$@"

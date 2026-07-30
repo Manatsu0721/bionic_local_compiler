@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 cd $HOME/project/llvm-build
+# 修复 MicrosoftDemangleNodes.h 缺失的头文件
+sed -i '1i#include <cstdint>\n#include <string>' $HOME/project/llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h
 
 cmake -G Ninja ../llvm \
     -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake \

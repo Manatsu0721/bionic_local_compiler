@@ -47,6 +47,7 @@ jobs:
           git checkout 35c021c49f44cd4e06875c4b1398a2b3464132bb
           cd ..
           git clone --depth=1 https://github.com/Manatsu0721/bionic_local_compiler.git
+          chmod +x $HOME/project/bionic_local_compiler/build-clang.sh
 
       # 5. 设置其他环境变量
       - name: Set env vars

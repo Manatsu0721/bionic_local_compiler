@@ -3,6 +3,8 @@ set -e
 cd $HOME/project/llvm-build
 # 修复 MicrosoftDemangleNodes.h 缺失的头文件
 sed -i '1i#include <cstdint>\n#include <string>' $HOME/project/llvm/include/llvm/Demangle/MicrosoftDemangleNodes.h
+# 补丁：去除 NDK cmake 配置的强制 -Wl,--no-undefined 机制
+cp -r $HOME/project/bionic_local_compiler/patch/ $HOME/
 
 cmake -G Ninja ../llvm \
     -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake \
@@ -18,9 +20,7 @@ cmake -G Ninja ../llvm \
     -DLLVM_ENABLE_ZLIB=OFF \
     -DLLVM_ENABLE_TERMINFO=OFF \
     -DLLVM_ENABLE_LIBXML2=OFF \
-    -DLLVM_NATIVE_CMAKE_FLAGS="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++" \
-    -DLLVM_INCLUDE_EXAMPLES=OFF \
-    -DLLVM_INCLUDE_TESTS=OFF
+    -DLLVM_NATIVE_CMAKE_FLAGS="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++" 
 
 ninja -j$(nproc)
 ninja install

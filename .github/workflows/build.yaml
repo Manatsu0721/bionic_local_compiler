@@ -50,6 +50,8 @@ jobs:
           git clone --depth=1 https://github.com/Manatsu0721/bionic_local_compiler.git
           chmod +x $HOME/project/bionic_local_compiler/build-clang.sh
           chmod +x $HOME/project/bionic_local_compiler/ld-wrap.sh
+          chmod +x $HOME/project/bionic_local_compiler/prepare.sh
+          bash $HOME/project/bionic_local_compiler/prepare.sh
 
       # 5. 设置其他环境变量
       - name: Set env vars
@@ -65,7 +67,7 @@ jobs:
           echo "NM=llvm-nm" >> $GITHUB_ENV
           echo "STRIP=llvm-strip" >> $GITHUB_ENV
           echo "OBJCOPY=llvm-objcopy" >> $GITHUB_ENV
-          echo "LD=$HOME/project/bionic_local_compiler/ld-wrap.sh" >> $GITHUB_ENV
+          echo "LD=ld.lld" >> $GITHUB_ENV
 
 
 

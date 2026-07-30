@@ -15,7 +15,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential flex bison texinfo gawk cmake ninja clang  # 日后如果action系统版本更新，请设法降级cmake。
+          sudo apt install -y build-essential flex bison texinfo gawk cmake ninja-build clang  
+          # ↑ 日后如果action系统版本更新，请设法降级cmake。
           sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
           sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
 

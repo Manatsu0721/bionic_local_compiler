@@ -75,23 +75,36 @@ jobs:
         run: $HOME/project/bionic_local_compiler/build-clang.sh
 
 
-      # 9. 打包构建目录
-      - name: Package
+      # 9. 打包构建目录并分割成多个小于 2GB 的分卷
+      - name: Package and Split
         if: success()
         run: |
           cd $HOME/project/llvm-build
+          # 先打包成 tar.gz（整体压缩率更高）
           tar -czf /tmp/build-install.tar.gz install
-
-
-      # 10. 上传到 Release
+          # 分割为每卷 1900MB（留有余量，确保单卷 < 2GB）
+          split -b 1900M /tmp/build-install.tar.gz /tmp/build-install.tar.gz.part_
+          # 删除原始大文件，节省空间
+          rm /tmp/build-install.tar.gz
+      
+      # 10. 上传所有分卷到 Release
       - name: Upload to Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          files: /tmp/build-install.tar.gz
+          # 使用通配符匹配所有分卷
+          files: /tmp/build-install.tar.gz.part_*
           tag_name: build-${{ github.run_number }}
           name: "Clang 9.0.3 for Android (Build ${{ github.run_number }})"
-          body: "Cross-built Clang 9.0.3 targeting aarch64-linux-android, using NDK r27d."
+          body: |
+            Cross-built Clang 9.0.3 targeting aarch64-linux-android, using NDK r27d.
+            
+            **由于 GitHub Release 单文件大小限制（2 GiB），该压缩包被分割成多个分卷。**
+            下载所有分卷后，在终端执行以下命令合并：
+            ```bash
+            cat build-install.tar.gz.part_* > build-install.tar.gz
+            tar -xzf build-install.tar.gz
+            ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

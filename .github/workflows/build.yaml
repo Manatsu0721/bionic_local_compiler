@@ -80,14 +80,15 @@ jobs:
         if: success()
         run: |
           cd $HOME/project/llvm-build
-          tar -czf ../build-install.tar.gz install
+          tar -czf /tmp/build-install.tar.gz install
+
 
       # 10. 上传到 Release
       - name: Upload to Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          files: $HOME/project/build-install.tar.gz
+          files: /tmp/build-install.tar.gz
           tag_name: build-${{ github.run_number }}
           name: "Clang 9.0.3 for Android (Build ${{ github.run_number }})"
           body: "Cross-built Clang 9.0.3 targeting aarch64-linux-android, using NDK r27d."

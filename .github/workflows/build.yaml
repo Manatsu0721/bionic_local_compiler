@@ -83,28 +83,23 @@ jobs:
           # 先打包成 tar.gz（整体压缩率更高）
           tar -czf /tmp/build-install.tar.gz install
           # 分割为每卷 1900MB（留有余量，确保单卷 < 2GB）
-          split -b 1900M /tmp/build-install.tar.gz /tmp/build-install.tar.gz.part_
+          # split -b 1900M /tmp/build-install.tar.gz /tmp/build-install.tar.gz.part_
           # 删除原始大文件，节省空间
-          rm /tmp/build-install.tar.gz
+          # rm /tmp/build-install.tar.gz
       
       # 10. 上传所有分卷到 Release
       - name: Upload to Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          # 使用通配符匹配所有分卷
-          files: /tmp/build-install.tar.gz.part_*
+          # 若要上传巨大的not stripped包，请使用通配符匹配所有分卷。# files: /tmp/build-install.tar.gz.part_*
+          files: /tmp/build-install.tar.gz
           tag_name: build-${{ github.run_number }}
           name: "Clang 9.0.3 for Android (Build ${{ github.run_number }})"
           body: |
             Cross-built Clang 9.0.3 targeting aarch64-linux-android, using NDK r27d.
             
-            **由于 GitHub Release 单文件大小限制（2 GiB），该压缩包被分割成多个分卷。**
-            下载所有分卷后，在终端执行以下命令合并：
-            ```bash
-            cat build-install.tar.gz.part_* > build-install.tar.gz
-            tar -xzf build-install.tar.gz
-            ```
+            **这是已strip版本，如需要未strip版本请修改 build-clang.sh 内的安装命令为 `make install`，同时修改该yaml中的压缩包上传逻辑。**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

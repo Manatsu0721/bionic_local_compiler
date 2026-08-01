@@ -98,8 +98,7 @@ jobs:
           name: "Clang 9.0.3 for Android (Build ${{ github.run_number }})"
           body: |
             Cross-built Clang 9.0.3 targeting aarch64-linux-android, using NDK r27d.
-            
-            **这是已strip版本，如需要未strip版本请修改 build-clang.sh 内的安装命令为 `make install`，同时修改该yaml中的压缩包上传逻辑。**
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -18,7 +18,6 @@ cmake -G Ninja ../llvm \
     -DLLVM_ENABLE_TERMINFO=OFF \
     -DLLVM_ENABLE_LIBXML2=OFF \
     -DLLVM_NATIVE_CMAKE_FLAGS="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++" \
-    -DLLVM_DISTRIBUTION_COMPONENTS="clang;lld;llvm" \
     -DLLVM_VERSION_MAJOR=9 \
     -DLLVM_VERSION_MINOR=0 \
     -DLLVM_VERSION_PATCH=3 \
@@ -32,4 +31,5 @@ cmake -G Ninja ../llvm \
 
 
 ninja -j$(nproc)
-ninja install-distribution-stripped
+cmake --install . --prefix $(pwd)/install --strip
+# ↑ 如果要保留symtab，请将上面这条命令改为"ninja install"，同时修改ld-wrap.sh，在exec命令末尾添加"-S"。
